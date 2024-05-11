@@ -1,0 +1,33 @@
+# Ignore node_modules directory
+node_modules/
+
+# Ignore dist directory (contains compiled TypeScript files)
+dist/
+
+# Prisma related files
+/prisma/.env
+/prisma/.prisma
+/prisma/migration
+/prisma/schema.prisma
+/prisma/seed.ts
+
+# Environment variables file
+.env
+
+# Visual Studio Code specific files
+.vscode/
+
+# Logs
+logs
+*.log
+
+# Dependency directories
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Security
+.nyc_output/
+.DS_Store
+*.swp

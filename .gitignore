@@ -8,7 +8,7 @@ dist/
 /prisma/.env
 /prisma/.prisma
 /prisma/migration
-/prisma/schema.prisma
+# /prisma/schema.prisma
 /prisma/seed.ts
 
 # Environment variables file

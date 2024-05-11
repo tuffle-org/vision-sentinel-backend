@@ -7,7 +7,7 @@ dist/
 # Prisma related files
 /prisma/.env
 /prisma/.prisma
-/prisma/migration
+# /prisma/migration
 # /prisma/schema.prisma
 /prisma/seed.ts
 

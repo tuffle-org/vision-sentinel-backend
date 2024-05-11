@@ -5,7 +5,7 @@ import { PORT } from "./config/constants";
 import { loginUser } from "./controllers/auth";
 import { setupWebSocketServer } from "./websocket";
 import { authMiddleware } from "./middlewares/auth";
-import { createUser } from "./controllers/users";
+import { createUser, getUser } from "./controllers/users";
 import multer from "multer";
 
 const app = express();
@@ -31,6 +31,7 @@ app.use(
     upload.single("user_image"),
     createUser
 );
+app.use("/api/get-user", authMiddleware, getUser);
 
 server.listen(PORT, () => {
     console.log(`Server running on port http://localhost:${PORT}`);

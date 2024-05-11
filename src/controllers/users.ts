@@ -47,3 +47,15 @@ export async function createUser(req: Request, res: Response) {
         res.status(500).json({ error: "Internal server error" });
     }
 }
+
+export async function getUser(req: Request, res: Response) {
+    try {
+        // Insert user into the database using Prisma
+        const users = await prisma.user.findMany();
+
+        res.status(200).json(users);
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+}

@@ -1,4 +1,4 @@
-export const PORT = process.env.PORT || 5000;
+export const PORT = process.env.PORT || 4000;
 export const JWT_SECRET = process.env.JWT_SECRET || "SECRET";
 export const USERNAME = process.env.USERNAME;
 export const PASSWORD = process.env.PASSWORD;

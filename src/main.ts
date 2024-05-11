@@ -23,9 +23,14 @@ app.post("/api/login", loginUser);
 
 setupWebSocketServer(wss);
 
-app.use(authMiddleware);
+// app.use(authMiddleware);
 
-app.use("/api/create-user", upload.single("user_image"), createUser);
+app.use(
+    "/api/create-user",
+    authMiddleware,
+    upload.single("user_image"),
+    createUser
+);
 
 server.listen(PORT, () => {
     console.log(`Server running on port http://localhost:${PORT}`);

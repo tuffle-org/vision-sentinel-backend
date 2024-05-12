@@ -11,6 +11,7 @@ export async function createUser(req: Request, res: Response) {
             expiry_date,
             user_status,
             face_data,
+            user_image,
         } = req.body as any;
 
         // Validate user data (add more validation as needed)
@@ -28,12 +29,12 @@ export async function createUser(req: Request, res: Response) {
                 .json({ error: "User already exists with this user_id" });
         }
 
-        const user_image = req.file; // Access the uploaded file buffer
+        // const user_image = req.file; // Access the uploaded file buffer
 
         // Check if user_image is undefined
-        if (!user_image) {
-            return res.status(400).json({ error: "No file uploaded" });
-        }
+        // if (!user_image) {
+        //     return res.status(400).json({ error: "No file uploaded" });
+        // }
 
         // Start a Prisma transaction
         const result = await prisma.$transaction(async (prisma) => {
@@ -42,7 +43,7 @@ export async function createUser(req: Request, res: Response) {
                 data: {
                     user_id,
                     user_name,
-                    user_image: "/static/" + user_image.filename,
+                    user_image,
                     group,
                     expiry_date,
                     created_at: new Date(),

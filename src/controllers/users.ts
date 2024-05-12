@@ -48,7 +48,7 @@ export async function createUser(req: Request, res: Response) {
                     created_at: new Date(),
                     updated_at: new Date(),
                     user_status: user_status || "Registration",
-                    face_data: JSON.parse(face_data),
+                    face_data: face_data,
                 },
             });
             console.log(newUser);

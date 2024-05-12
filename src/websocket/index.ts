@@ -39,59 +39,6 @@ export function setupWebSocketServer(wss: WebSocket.Server): WebSocket.Server {
                 console.error(`Error parsing message: ${error}`);
                 return;
             }
-
-            // Determine message type
-            const messageType = parsedMessage.type;
-
-            console.log("Size of clients : ", wss.clients.size);
-            // Handle different message types
-            switch (messageType) {
-                case "user_creation":
-                    const data = parsedMessage.data;
-                    console.log(data);
-                    const bufferFaceData = Buffer.from(
-                        data.face_data,
-                        "base64"
-                    );
-
-                    const userCreateObj = await prisma.user.create({
-                        data: {
-                            user_id: data.user_id,
-                            user_image: data.user_image,
-                            user_name: data.user_name,
-                            group: data.group,
-                            expiry_date: data.expiry_date,
-                            created_at: Date(),
-                            updated_at: Date(),
-                            user_status: "",
-                            face_data: bufferFaceData,
-                        },
-                    });
-                    // Send message to appropriate channel (based on token or user ID)
-                    wss.clients.forEach((client: CustomWebSocket) => {
-                        if (
-                            client !== ws &&
-                            client.readyState === WebSocket.OPEN
-                        ) {
-                            client.send(JSON.stringify(userCreateObj));
-                        }
-                    });
-                    break;
-                case "list_update":
-                    // Send message to appropriate channel (based on token or user ID)
-                    // Example: Broadcast to all clients
-                    wss.clients.forEach((client: CustomWebSocket) => {
-                        if (client.readyState === WebSocket.OPEN) {
-                            client.send(JSON.stringify(parsedMessage));
-                        }
-                    });
-                    break;
-                case "delete":
-                    // Handle delete event...
-                    break;
-                default:
-                    console.error(`Unknown message type: ${messageType}`);
-            }
         });
 
         console.log(`User with token ${token} connected`);

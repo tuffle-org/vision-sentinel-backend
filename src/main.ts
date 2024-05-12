@@ -5,7 +5,12 @@ import { PORT } from "./config/constants";
 import { loginUser } from "./controllers/auth";
 import { setupWebSocketServer } from "./websocket";
 import { authMiddleware } from "./middlewares/auth";
-import { createUser, getUser } from "./controllers/users";
+import {
+    createUser,
+    getUser,
+    updateInOut,
+    updateUser,
+} from "./controllers/users";
 import multer from "multer";
 import path from "path";
 
@@ -25,27 +30,25 @@ const storage = multer.diskStorage({
     },
 });
 
-// Serve uploaded files statically
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 // Initialize multer with storage settings
 const upload = multer({ storage: storage });
 
 app.use(express.json());
-
-app.post("/api/login", loginUser);
+app.use("/static", express.static(path.join(__dirname, "../uploads")));
 
 setupWebSocketServer(wss);
 
-// app.use(authMiddleware);
+app.post("/api/login", loginUser);
 
-app.use(
+app.post(
     "/api/create-user",
     authMiddleware,
     upload.single("user_image"),
     createUser
 );
-app.use("/api/get-user", authMiddleware, getUser);
+app.get("/api/get-user", authMiddleware, getUser);
+app.patch("/api/update-user/:id", authMiddleware, updateUser);
+app.post("/api/update-status/:id", authMiddleware, updateInOut);
 
 server.listen(PORT, () => {
     console.log(`Server running on port http://localhost:${PORT}`);

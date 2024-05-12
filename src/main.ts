@@ -48,7 +48,7 @@ app.post(
     createUser
 );
 app.get("/api/get-user", authMiddleware, getUser);
-app.patch("/api/update-user/:id", authMiddleware, updateUser);
+app.post("/api/update-user/:id", authMiddleware, updateUser);
 app.delete("/api/delete-user/:id", authMiddleware, deleteUser);
 app.post("/api/update-status/:id", authMiddleware, updateInOut);
 

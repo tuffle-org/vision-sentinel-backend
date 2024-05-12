@@ -105,6 +105,38 @@ export async function updateUser(req: Request, res: Response) {
     }
 }
 
+export async function deleteUser(req: Request, res: Response) {
+    try {
+        // Extract userId from request parameters
+        const userId: string = req.params.id as string;
+
+        // Check if userId is present
+        if (!userId) {
+            return res.status(400).json({ error: "Missing user ID" });
+        }
+
+        // Check if user exists
+        const existingUser = await prisma.user.findFirst({
+            where: { user_id: userId },
+        });
+        if (!existingUser) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        // Delete user from the database using Prisma
+        await prisma.user.delete({
+            where: { user_id: userId },
+        });
+
+        // Return success message
+        res.status(200).json({ message: "User deleted successfully" });
+    } catch (error) {
+        // Handle errors
+        console.error("Error deleting user:", error);
+        res.status(500).json({ error: "Failed to delete user" });
+    }
+}
+
 export async function updateInOut(req: Request, res: Response) {
     try {
         console.log(req.query, req.params, req.body);

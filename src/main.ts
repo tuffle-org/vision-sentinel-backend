@@ -7,6 +7,7 @@ import { setupWebSocketServer } from "./websocket";
 import { authMiddleware } from "./middlewares/auth";
 import {
     createUser,
+    deleteUser,
     getUser,
     updateInOut,
     updateUser,
@@ -48,6 +49,7 @@ app.post(
 );
 app.get("/api/get-user", authMiddleware, getUser);
 app.patch("/api/update-user/:id", authMiddleware, updateUser);
+app.delete("/api/delete-user/:id", authMiddleware, deleteUser);
 app.post("/api/update-status/:id", authMiddleware, updateInOut);
 
 server.listen(PORT, () => {

@@ -80,7 +80,7 @@ export async function getUser(req: Request, res: Response) {
         // Insert user into the database using Prisma
         const users = await prisma.user.findMany({
             select: {
-                face_data: false,
+                face_data: true,
                 user_id: true,
                 user_image: true,
                 user_name: true,

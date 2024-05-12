@@ -28,9 +28,16 @@ model User {
 }
 
 model Log {
-  id         String   @id
-  event_type String
+  id         String     @id @default(uuid())
+  event_type EVENT_TYPE
   user_id    String
-  date_time  DateTime @default(now())
-  user       User     @relation(fields: [id], references: [id])
+  date_time  DateTime   @default(now())
+  user       User       @relation(fields: [user_id], references: [user_id])
+}
+
+enum EVENT_TYPE {
+  Registration
+  Update
+  In
+  Out
 }

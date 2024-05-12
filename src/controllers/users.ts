@@ -40,6 +40,13 @@ export async function createUser(req: Request, res: Response) {
             },
         });
 
+        await prisma.log.create({
+            data: {
+                user: { connect: { id: newUser.user_id } },
+                event_type: "Registration",
+            },
+        });
+
         res.status(200).json(newUser);
     } catch (error) {
         console.error("Error creating user:", error);
@@ -96,6 +103,13 @@ export async function updateUser(req: Request, res: Response) {
         const updatedUser = await prisma.user.update({
             where: { user_id: userId },
             data: updateObj,
+        });
+
+        await prisma.log.create({
+            data: {
+                user: { connect: { id: updatedUser.user_id } },
+                event_type: "Update",
+            },
         });
 
         res.status(200).json(updatedUser);
@@ -161,6 +175,13 @@ export async function updateInOut(req: Request, res: Response) {
         const updatedUser = await prisma.user.update({
             where: { user_id: userId },
             data: { user_status: status },
+        });
+
+        await prisma.log.create({
+            data: {
+                user: { connect: { id: updatedUser.user_id } },
+                event_type: status,
+            },
         });
 
         // Return the updated user as a response

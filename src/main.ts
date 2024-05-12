@@ -16,8 +16,8 @@ import multer from "multer";
 import path from "path";
 
 const app = express();
-export const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const server = http.createServer(app);
+export const wss = new WebSocket.Server({ server });
 
 // Define storage options for Multer
 const storage = multer.diskStorage({

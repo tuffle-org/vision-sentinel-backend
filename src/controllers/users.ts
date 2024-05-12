@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../config/prisma";
+import { broadcastMessage } from "../websocket";
 
 export async function createUser(req: Request, res: Response) {
     try {
@@ -11,11 +12,20 @@ export async function createUser(req: Request, res: Response) {
             user_status,
             face_data,
         } = req.body as any;
-        console.log("BOADY : ", req.body);
 
         // Validate user data (add more validation as needed)
         if (!user_id || !user_name || !group || !expiry_date) {
             res.status(400).json({ error: "Missing required fields" });
+        }
+
+        // Check if user exists
+        const existingUser = await prisma.user.findFirst({
+            where: { user_id },
+        });
+        if (existingUser) {
+            return res
+                .status(400)
+                .json({ error: "User already exists with this user_id" });
         }
 
         const user_image = req.file; // Access the uploaded file buffer
@@ -25,29 +35,40 @@ export async function createUser(req: Request, res: Response) {
             return res.status(400).json({ error: "No file uploaded" });
         }
 
-        // Insert user into the database using Prisma
-        const newUser = await prisma.user.create({
-            data: {
-                user_id,
-                user_name,
-                user_image: "/static/" + user_image.filename,
-                group,
-                expiry_date,
-                created_at: new Date(),
-                updated_at: new Date(),
-                user_status: user_status || "Registration",
-                face_data: face_data,
-            },
+        // Start a Prisma transaction
+        const result = await prisma.$transaction(async (prisma) => {
+            // Insert user into the database
+            const newUser = await prisma.user.create({
+                data: {
+                    user_id,
+                    user_name,
+                    user_image: "/static/" + user_image.filename,
+                    group,
+                    expiry_date,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                    user_status: user_status || "Registration",
+                    face_data: face_data,
+                },
+            });
+            console.log(newUser);
+
+            // Create log entry for user registration
+            const log = await prisma.log.create({
+                data: {
+                    user_id: newUser.user_id,
+                    event_type: "Registration",
+                },
+            });
+
+            // Return both the user and the log entry
+            return { newUser, log };
         });
 
-        await prisma.log.create({
-            data: {
-                user: { connect: { id: newUser.user_id } },
-                event_type: "Registration",
-            },
-        });
+        // Broadcast the log entry to WebSocket clients
+        broadcastMessage("user_created", result.log);
 
-        res.status(200).json(newUser);
+        res.status(200).json(result.newUser);
     } catch (error) {
         console.error("Error creating user:", error);
         res.status(500).json({ error: "Internal server error" });
@@ -72,6 +93,7 @@ export async function updateUser(req: Request, res: Response) {
             req.body as any;
 
         const userId: string = req.query.id as string;
+        console.log(req.body);
 
         // Validate user data (add more validation as needed)
         if (!user_name || !group || !expiry_date) {
@@ -104,13 +126,16 @@ export async function updateUser(req: Request, res: Response) {
             where: { user_id: userId },
             data: updateObj,
         });
+        console.log(updatedUser, "up");
 
-        await prisma.log.create({
+        const log = await prisma.log.create({
             data: {
-                user: { connect: { id: updatedUser.user_id } },
+                user_id: updatedUser.user_id,
                 event_type: "Update",
             },
         });
+
+        broadcastMessage("user_updated", log);
 
         res.status(200).json(updatedUser);
     } catch (error) {
@@ -138,9 +163,11 @@ export async function deleteUser(req: Request, res: Response) {
         }
 
         // Delete user from the database using Prisma
-        await prisma.user.delete({
+        const user = await prisma.user.delete({
             where: { user_id: userId },
         });
+
+        broadcastMessage("user_deleted", user);
 
         // Return success message
         res.status(200).json({ message: "User deleted successfully" });
@@ -171,21 +198,31 @@ export async function updateInOut(req: Request, res: Response) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        // Update user's status in the database using Prisma
-        const updatedUser = await prisma.user.update({
-            where: { user_id: userId },
-            data: { user_status: status },
-        });
+        const result = await prisma.$transaction(async (prisma) => {
+            // Update user's status in the database
+            const updatedUser = await prisma.user.update({
+                where: { user_id: userId },
+                data: { user_status: status },
+            });
+            console.log(updateUser);
 
-        await prisma.log.create({
-            data: {
-                user: { connect: { id: updatedUser.user_id } },
-                event_type: status,
-            },
+            // Create log entry for user status update
+            const log = await prisma.log.create({
+                data: {
+                    user_id: updatedUser.user_id,
+                    event_type: status,
+                },
+            });
+
+            // Broadcast message
+            broadcastMessage("user_status_update", log);
+
+            // Return updated user and log entry
+            return { updatedUser, log };
         });
 
         // Return the updated user as a response
-        res.status(200).json(updatedUser);
+        res.status(200).json(result.updatedUser);
     } catch (error) {
         // Handle errors
         console.error("Error updating user:", error);

@@ -1,9 +1,10 @@
 // websocketServer.ts
 
-import WebSocket from "ws";
+import WebSocket, { WebSocketServer } from "ws";
 import { IncomingMessage } from "http";
 import { verifyToken } from "../services/auth";
 import prisma from "../config/prisma";
+import { wss } from "../main";
 
 interface CustomWebSocket extends WebSocket {
     token?: string;
@@ -97,4 +98,13 @@ export function setupWebSocketServer(wss: WebSocket.Server): WebSocket.Server {
     });
 
     return wss;
+}
+
+// Function to broadcast message to all WebSocket clients
+export function broadcastMessage(type: string, data: any) {
+    wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ type: type, data }));
+        }
+    });
 }

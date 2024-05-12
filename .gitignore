@@ -11,6 +11,8 @@ dist/
 # /prisma/schema.prisma
 /prisma/seed.ts
 
+uploads
+
 # Environment variables file
 .env
 

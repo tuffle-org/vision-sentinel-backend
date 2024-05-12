@@ -17,7 +17,7 @@ model User {
   id          String   @id @default(uuid())
   user_id     String
   user_name   String
-  user_image  Bytes
+  user_image  String
   group       String
   expiry_date String
   created_at  DateTime @default(now())

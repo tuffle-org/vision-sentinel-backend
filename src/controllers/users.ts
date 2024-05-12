@@ -10,13 +10,19 @@ export async function createUser(req: Request, res: Response) {
             expiry_date,
             user_status,
             face_data,
-            user_image,
         } = req.body as any;
-        console.log("BOADY : ", req.body, req.file?.buffer);
+        console.log("BOADY : ", req.body);
 
         // Validate user data (add more validation as needed)
         if (!user_id || !user_name || !group || !expiry_date) {
             res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const user_image = req.file; // Access the uploaded file buffer
+
+        // Check if user_image is undefined
+        if (!user_image) {
+            return res.status(400).json({ error: "No file uploaded" });
         }
 
         // Insert user into the database using Prisma
@@ -24,7 +30,7 @@ export async function createUser(req: Request, res: Response) {
             data: {
                 user_id,
                 user_name,
-                user_image,
+                user_image: user_image.filename,
                 group,
                 expiry_date,
                 created_at: new Date(),
@@ -58,14 +64,11 @@ export async function updateUser(req: Request, res: Response) {
         const {
             user_id,
             user_name,
-            user_image,
             group,
             expiry_date,
             user_status,
             face_data,
         } = req.body as any;
-
-        const userId: string = req.query.id as string;
 
         // Validate user data (add more validation as needed)
         if (!user_id || !user_name || !group || !expiry_date) {
@@ -79,6 +82,8 @@ export async function updateUser(req: Request, res: Response) {
         if (!existingUser) {
             return res.status(404).json({ error: "User not found" });
         }
+
+        const userId: string = req.query.id as string;
 
         // Update user in the database using Prisma
         const updatedUser = await prisma.user.update({

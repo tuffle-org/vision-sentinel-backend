@@ -32,7 +32,7 @@ model Log {
   event_type EVENT_TYPE
   user_id    String
   date_time  DateTime   @default(now())
-  user       User       @relation(fields: [user_id], references: [user_id])
+  user       User       @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
 }
 
 enum EVENT_TYPE {

@@ -67,7 +67,10 @@ export async function createUser(req: Request, res: Response) {
         });
 
         // Broadcast the log entry to WebSocket clients
-        broadcastMessage("user_created", result.log);
+        broadcastMessage("user_created", {
+            log: result.log,
+            user: result.newUser,
+        });
 
         res.status(200).json(result.newUser);
     } catch (error) {
@@ -100,8 +103,14 @@ export async function getUser(req: Request, res: Response) {
 
 export async function updateUser(req: Request, res: Response) {
     try {
-        const { user_id, user_name, group, expiry_date, face_data } =
-            req.body as any;
+        const {
+            user_id,
+            user_name,
+            group,
+            expiry_date,
+            face_data,
+            user_image,
+        } = req.body as any;
 
         const userId: string = req.query.id as string;
         console.log(req.body);
@@ -122,14 +131,14 @@ export async function updateUser(req: Request, res: Response) {
             user_name,
             group,
             expiry_date,
-            face_data,
         };
-
-        const user_image = req.file; // Access the uploaded file buffer
 
         // Check if user_image is not undefined
         if (user_image) {
-            updateObj.user_image = "/static/" + user_image.filename;
+            updateObj.user_image = user_image;
+        }
+        if (face_data) {
+            updateObj.face_data = face_data;
         }
 
         // Update user in the database using Prisma
@@ -146,7 +155,10 @@ export async function updateUser(req: Request, res: Response) {
             },
         });
 
-        broadcastMessage("user_updated", log);
+        broadcastMessage("user_updated", {
+            log: log,
+            user: updatedUser,
+        });
 
         res.status(200).json(updatedUser);
     } catch (error) {
@@ -226,7 +238,7 @@ export async function updateInOut(req: Request, res: Response) {
             });
 
             // Broadcast message
-            broadcastMessage("user_status_update", log);
+            broadcastMessage("user_status_update", { log, user: updateUser });
 
             // Return updated user and log entry
             return { updatedUser, log };

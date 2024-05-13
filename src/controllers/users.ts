@@ -112,13 +112,8 @@ export async function updateUser(req: Request, res: Response) {
             user_image,
         } = req.body as any;
 
-        const userId: string = req.query.id as string;
-        console.log(req.body);
-
-        // Validate user data (add more validation as needed)
-        if (!user_name || !group || !expiry_date) {
-            return res.status(400).json({ error: "Missing required fields" });
-        }
+        const userId: string = req.params.id as string;
+        console.log(userId, "updated at user ");
 
         // Check if user exists
         const existingUser = await prisma.user.findFirst({

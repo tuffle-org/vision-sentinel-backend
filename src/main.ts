@@ -17,7 +17,9 @@ const app = express();
 const server = http.createServer(app);
 export const wss = new WebSocket.Server({ server });
 
-app.use(express.json());
+// Increase the maximum allowed payload size to 50MB
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 setupWebSocketServer(wss);
 

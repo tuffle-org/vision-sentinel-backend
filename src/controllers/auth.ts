@@ -3,7 +3,7 @@ import { Password } from "./../../node_modules/.prisma/client/index.d";
 
 import { Request, Response } from "express";
 import { generateToken } from "../services/auth";
-import { PASSWORD, USERNAME } from "../config/constants";
+import { USERNAME } from "../config/constants";
 import prisma from "../config/prisma";
 
 export async function loginUser(req: Request, res: Response): Promise<void> {
@@ -11,18 +11,14 @@ export async function loginUser(req: Request, res: Response): Promise<void> {
     const { username, password } = req.body;
     const passwordObj: any = await prisma.password.findFirst();
 
-    console.log("PasswordObj", passwordObj);
     if (!passwordObj) {
         res.status(400).json({ error: "No password set yet!" });
     }
-    
-    console.log(username, USERNAME, password, passwordObj.password);
 
     if (username !== USERNAME || password !== passwordObj.password) {
         res.status(401).json({ error: "Invalid username or password" });
         return;
     }
-    console.log(passwordObj, "PasswordObj");
 
     // Generate JWT token
     const token = generateToken(username);

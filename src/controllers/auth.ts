@@ -30,13 +30,19 @@ export async function passwordChange(
     res: Response
 ): Promise<void> {
     try {
-        const { password } = req.body;
+        const { oldPassword, newPassword } = req.body;
 
-        // Update the first row in the Password model
+        // Check if the old password matches the existing password
+        const existingPassword = await prisma.password.findFirst();
+        if (!existingPassword || existingPassword.password !== oldPassword) {
+            res.status(400).json({ error: "Invalid old password" });
+        }
+
+        // Update the first row in the Password model with the new password
         const updatedPassword = await prisma.password.updateMany({
-            where: {}, // Update all rows if no condition is provided
+            where: {},
             data: {
-                password,
+                password: newPassword,
             },
         });
 
@@ -44,7 +50,7 @@ export async function passwordChange(
             // Create a new row if no existing row is found
             await prisma.password.create({
                 data: {
-                    password,
+                    password: newPassword,
                 },
             });
         }

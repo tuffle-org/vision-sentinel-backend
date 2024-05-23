@@ -41,3 +41,8 @@ enum EVENT_TYPE {
   In
   Out
 }
+
+model Password{
+  id         String     @id @default(uuid())
+  password   String     
+}

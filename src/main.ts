@@ -2,7 +2,7 @@ import express from "express";
 import http from "http";
 import WebSocket from "ws";
 import { PORT } from "./config/constants";
-import { loginUser } from "./controllers/auth";
+import { loginUser, passwordChange } from "./controllers/auth";
 import { setupWebSocketServer } from "./websocket";
 import { authMiddleware } from "./middlewares/auth";
 import {
@@ -24,6 +24,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 setupWebSocketServer(wss);
 
 app.post("/api/login", loginUser);
+app.post("/api/password-change", passwordChange);
 
 app.post("/api/create-user", authMiddleware, createUser);
 app.get("/api/get-user", authMiddleware, getUser);

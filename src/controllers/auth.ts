@@ -1,4 +1,3 @@
-import { Password } from "./../../node_modules/.prisma/client/index.d";
 // loginController.ts
 
 import { Request, Response } from "express";

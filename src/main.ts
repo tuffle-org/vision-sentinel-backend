@@ -11,6 +11,7 @@ import {
     getUser,
     updateInOut,
     updateUser,
+    uploadUsers,
 } from "./controllers/users";
 
 const app = express();
@@ -29,6 +30,8 @@ app.post("/api/password-change", passwordChange);
 app.post("/api/create-user", authMiddleware, createUser);
 app.get("/api/get-user", authMiddleware, getUser);
 app.post("/api/update-user/:id", authMiddleware, updateUser);
+app.post("/api/upload-user/", authMiddleware, uploadUsers);
+app.post("/api/upload-logs/", authMiddleware, uploadUsers);
 app.delete("/api/delete-user/:id", authMiddleware, deleteUser);
 app.post("/api/update-status/:id", authMiddleware, updateInOut);
 

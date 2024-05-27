@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import prisma from "../config/prisma";
 import { broadcastMessage } from "../websocket";
+import { Prisma } from "@prisma/client";
 
 export async function createUser(req: Request, res: Response) {
     try {
@@ -245,5 +246,86 @@ export async function updateInOut(req: Request, res: Response) {
         // Handle errors
         console.error("Error updating user:", error);
         res.status(500).json({ error: "Failed to update user status" });
+    }
+}
+
+export async function uploadUsers(req: Request, res: Response) {
+    try {
+        const users = req.body as any[];
+
+        // Validate that users array is provided
+        if (!Array.isArray(users) || users.length === 0) {
+            return res.status(400).json({ error: "No users provided" });
+        }
+
+        const userCreationPromises = users.map(async (user) => {
+            const {
+                id: user_id,
+                name: user_name,
+                group,
+                expired: expiry_date,
+                user_status = "Registration",
+                faceJpg: face_data,
+                templates: user_image,
+            } = user;
+
+            // Validate user data
+            if (!user_id || !user_name || !group || !expiry_date) {
+                throw new Error("Missing required fields for user: " + user_id);
+            }
+
+            // Check if user exists
+            const existingUser = await prisma.user.findFirst({
+                where: { user_id },
+            });
+            if (existingUser) {
+                throw new Error("User already exists with user_id: " + user_id);
+            }
+
+            return {
+                user_id,
+                user_name,
+                group,
+                expiry_date,
+                user_status: user_status || "Registration",
+                face_data: JSON.stringify(face_data),
+                user_image: JSON.stringify(user_image),
+                created_at: new Date(),
+                updated_at: new Date(),
+            };
+        });
+
+        const newUsers = await Promise.all(userCreationPromises);
+
+        // Start a Prisma transaction to create users and log entries
+        const result = await prisma.$transaction(async (prisma) => {
+            const createdUsers = await prisma.user.createMany({
+                data: newUsers,
+            });
+
+            const logs: Prisma.LogCreateManyInput[] = newUsers.map((user) => ({
+                user_id: user.user_id as string,
+                event_type: "Registration",
+            }));
+
+            await prisma.log.createMany({
+                data: logs,
+            });
+
+            return createdUsers;
+        });
+
+        // Broadcast the log entries to WebSocket clients
+        newUsers.forEach((user) => {
+            broadcastMessage("user_created", {
+                log: { user_id: user.user_id, event_type: "Registration" },
+                user,
+            });
+        });
+
+        res.status(200).json(result);
+    } catch (error: any) {
+        console.error("Error creating users:", error.message);
+        res.status(500).json({ error: "Internal server error" });
     }
 }

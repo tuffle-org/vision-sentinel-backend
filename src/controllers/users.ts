@@ -251,8 +251,7 @@ export async function updateInOut(req: Request, res: Response) {
 
 export async function uploadUsers(req: Request, res: Response) {
     try {
-        console.log("BODY : --->", req.body);
-        const users = req.body as any[];
+        const users = JSON.parse(req.body.data) as any[];
 
         // Validate that users array is provided
         if (!Array.isArray(users) || users.length === 0) {

@@ -271,8 +271,8 @@ export async function uploadUsers(req: Request, res: Response) {
                 group,
                 expired: expiry_date,
                 user_status = "Registration",
-                faceJpg: face_data,
-                templates: user_image,
+                faceJpg: user_image,
+                templates: face_data,
             } = user;
 
             // Validate user data

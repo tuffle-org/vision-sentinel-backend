@@ -251,14 +251,20 @@ export async function updateInOut(req: Request, res: Response) {
 
 export async function uploadUsers(req: Request, res: Response) {
     try {
-        const users = req.body.data as any[];
+        const users = req.body as any[];
 
         // Validate that users array is provided
         if (!Array.isArray(users) || users.length === 0) {
             return res.status(400).json({ error: "No users provided" });
         }
 
-        const userCreationPromises = users.map(async (user) => {
+        // Filter out duplicate user_id entries
+        const uniqueUsers = users.filter(
+            (user, index, self) =>
+                index === self.findIndex((u) => u.id === user.id)
+        );
+
+        const userCreationPromises = uniqueUsers.map(async (user) => {
             const {
                 id: user_id,
                 name: user_name,
@@ -279,7 +285,10 @@ export async function uploadUsers(req: Request, res: Response) {
                 where: { user_id },
             });
             if (existingUser) {
-                throw new Error("User already exists with user_id: " + user_id);
+                console.log(
+                    `User with user_id: ${user_id} already exists. Skipping...`
+                );
+                return null;
             }
 
             return {
@@ -295,7 +304,14 @@ export async function uploadUsers(req: Request, res: Response) {
             };
         });
 
-        const newUsers = await Promise.all(userCreationPromises);
+        const userData = await Promise.all(userCreationPromises);
+        const newUsers = userData.filter(
+            (user) => user !== null
+        ) as Prisma.UserCreateManyInput[];
+
+        if (newUsers.length === 0) {
+            return res.status(400).json({ error: "No valid users to create" });
+        }
 
         // Start a Prisma transaction to create users and log entries
         const result = await prisma.$transaction(async (prisma) => {
@@ -304,7 +320,7 @@ export async function uploadUsers(req: Request, res: Response) {
             });
 
             const logs: Prisma.LogCreateManyInput[] = newUsers.map((user) => ({
-                user_id: user.user_id as string,
+                user_id: user!.user_id, // Non-null assertion since we filtered nulls out
                 event_type: "Registration",
             }));
 
@@ -318,7 +334,7 @@ export async function uploadUsers(req: Request, res: Response) {
         // Broadcast the log entries to WebSocket clients
         newUsers.forEach((user) => {
             broadcastMessage("user_created", {
-                log: { user_id: user.user_id, event_type: "Registration" },
+                log: { user_id: user!.user_id, event_type: "Registration" }, // Non-null assertion
                 user,
             });
         });

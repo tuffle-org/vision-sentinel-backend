@@ -251,7 +251,7 @@ export async function updateInOut(req: Request, res: Response) {
 
 export async function uploadUsers(req: Request, res: Response) {
     try {
-        const users = req.body as any[];
+        const users = req.body.data as any[];
 
         // Validate that users array is provided
         if (!Array.isArray(users) || users.length === 0) {

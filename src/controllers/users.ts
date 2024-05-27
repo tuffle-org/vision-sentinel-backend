@@ -345,3 +345,88 @@ export async function uploadUsers(req: Request, res: Response) {
         res.status(500).json({ error: "Internal server error" });
     }
 }
+
+export async function updateInOutMultiple(req: Request, res: Response) {
+    try {
+        console.log(req.query, req.params, req.body);
+        // Extract users array from request body
+        const users = req.body as {
+            user_id: string;
+            type: "In" | "Out";
+            date: Date;
+        }[];
+
+        // Validate that users array is provided
+        if (!Array.isArray(users) || users.length === 0) {
+            return res.status(400).json({ error: "No users provided" });
+        }
+
+        // Prepare update promises
+        const updatePromises = users.map(async (user) => {
+            const { user_id: userId, type: status, date } = user;
+
+            // Check if userId and status are present
+            if (!userId || !status) {
+                console.warn(`Missing required fields for user: ${userId}`);
+                return null; // Skip this user
+            }
+
+            // Check if user exists
+            const existingUser = await prisma.user.findFirst({
+                where: { user_id: userId },
+            });
+            if (!existingUser) {
+                console.log(
+                    `User with user_id: ${userId} not found. Skipping...`
+                );
+                return null;
+            }
+
+            return { user_id: userId, event_type: status, date_time: date };
+        });
+
+        const validUsers = (await Promise.all(updatePromises)).filter(
+            (user) => user !== null
+        ) as { user_id: string; event_type: "In" | "Out"; date_time: Date }[];
+
+        if (validUsers.length === 0) {
+            return res.status(400).json({ error: "No valid users to update" });
+        }
+
+        // Start a Prisma transaction to update user statuses and create log entries
+        const result = await prisma.$transaction(async (prisma) => {
+            const updateResults = await Promise.all(
+                validUsers.map(async (user) => {
+                    const updatedUser = await prisma.user.update({
+                        where: { user_id: user.user_id },
+                        data: { user_status: user.event_type },
+                    });
+
+                    const log = await prisma.log.create({
+                        data: {
+                            user_id: updatedUser.user_id,
+                            event_type: user.event_type,
+                        },
+                    });
+
+                    // Broadcast message
+                    broadcastMessage("user_status_update", {
+                        log,
+                        user: updatedUser,
+                    });
+
+                    return { updatedUser, log };
+                })
+            );
+
+            return updateResults;
+        });
+
+        // Return the updated users as a response
+        res.status(200).json(result.map((r) => r.updatedUser));
+    } catch (error: any) {
+        // Handle errors
+        console.error("Error updating users:", error.message);
+        res.status(500).json({ error: "Failed to update user statuses" });
+    }
+}

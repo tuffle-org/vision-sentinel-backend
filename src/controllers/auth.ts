@@ -34,21 +34,19 @@ export async function passwordChange(
 
         // Check if the old password matches the existing password
         const existingPassword = await prisma.password.findFirst();
-        if (!existingPassword || existingPassword.password !== oldPassword) {
-            res.status(400).json({ error: "Invalid old password" });
-        }
 
-        // Update the first row in the Password model with the new password
-        const updatedPassword = await prisma.password.updateMany({
-            where: {},
-            data: {
-                password: newPassword,
-            },
-        });
-
-        if (updatedPassword.count === 0) {
-            // Create a new row if no existing row is found
+        if (!existingPassword) {
             await prisma.password.create({
+                data: { password: newPassword },
+            });
+            res.json({ message: "Password updated successfully" });
+        } else {
+            if (existingPassword.password !== oldPassword) {
+                res.status(400).json({ error: "Invalid old password" });
+            }
+
+            // Update the first row in the Password model with the new password
+            const updatedPassword = await prisma.password.updateMany({
                 data: {
                     password: newPassword,
                 },

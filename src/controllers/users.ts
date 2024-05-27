@@ -350,7 +350,7 @@ export async function updateInOutMultiple(req: Request, res: Response) {
     try {
         console.log(req.query, req.params, req.body);
         // Extract users array from request body
-        const users = req.body as {
+        const users = JSON.parse(req.body.data) as {
             user_id: string;
             type: "In" | "Out";
             date: Date;

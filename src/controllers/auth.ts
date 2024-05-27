@@ -35,6 +35,10 @@ export async function passwordChange(
     try {
         const { oldPassword, newPassword } = req.body;
 
+        if (newPassword.length !== 4) {
+            res.send(400).json({ error: "Password should be 4 digits only!" });
+        }
+
         // Check if the old password matches the existing password
         const existingPassword = await prisma.password.findFirst();
 
